@@ -23,6 +23,7 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
+          tags: xi72yow/${{ github.repository }}:latest
       - name: Inspect
         run: |
           docker buildx imagetools inspect ghcr.io/${{ github.repository }}:latest
