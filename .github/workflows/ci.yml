@@ -13,9 +13,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
       - name: Build and push Docker image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: ./dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ github.repository }}:latest
