@@ -15,10 +15,11 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           context: .
           file: ./dockerfile
           push: true
           platforms: linux/amd64
           tags: ${{ github.repository }}:latest
-          secrets: |
-            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
