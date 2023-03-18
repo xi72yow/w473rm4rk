@@ -23,7 +23,7 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: ${{ github.repository }}:latest
+          tags: "ghcr.io/${{ github.repository }}:latest"
       - name: Inspect
         run: |
-          docker buildx imagetools inspect ghcr.io/${{ github.repository }}:latest
+          docker buildx imagetools inspect "ghcr.io/${{ github.repository }}:latest"
