@@ -154,6 +154,8 @@
         request.open("POST", url, true);
         request.onload = function () {
           clearInterval(uplodingInterval);
+          const uploding = document.getElementById("uploding");
+          uploding.innerHTML = "";
           if (request.status >= 200 && request.status < 400) {
             saveUrlInLocalStorage(request.responseText);
             loadUrlsFromLocalStorage();
