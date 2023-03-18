@@ -94,7 +94,7 @@
 
       function saveUrlInLocalStorage(url) {
         const urls = JSON.parse(localStorage.getItem("urls")) || [];
-        if (url.includes("https://")) urls.push(url);
+        if (url.includes("projects")) urls.push(url);
         while (urls.length > 10) {
           urls.shift();
         }
@@ -132,13 +132,12 @@
 
       function formSubmit(event) {
         startTime = Date.now();
-
+        blockUi(true);
         const url = "/upload";
         const request = new XMLHttpRequest();
         request.open("POST", url, true);
         request.onload = function () {
           if (request.status >= 200 && request.status < 400) {
-            blockUi(true);
             saveUrlInLocalStorage(request.responseText);
             loadUrlsFromLocalStorage();
             webSocket.send(request.responseText);
@@ -149,6 +148,7 @@
           </a>
         `;
           } else {
+            blockUi(false);
             alert("Fehler: " + request.responseText);
           }
         };

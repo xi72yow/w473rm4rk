@@ -35,22 +35,6 @@ function isAuth(req, res, next) {
   }
 }
 
-function getServerIp() {
-  const interfaces = os.networkInterfaces();
-  for (const devName in interfaces) {
-    const iface = interfaces[devName];
-    for (const alias of iface) {
-      if (alias.family === "IPv4" && alias.address !== "" && !alias.internal) {
-        return alias.address;
-      }
-    }
-  }
-}
-
-const serverIp = getServerIp();
-
-const serverUrl = `https://${serverIp}:${port}/`;
-
 app.use(fileUpload());
 
 // Add this line to serve our index.html page
@@ -100,9 +84,7 @@ app.post("/upload", isAuth, async function (req, res) {
     (Boolean(fast) ? "_Vorschau" : "") +
     ".mp4";
 
-  const downloadUrl = `${serverUrl}projects/${path.basename(
-    projectPath
-  )}/${outName}`;
+  const downloadUrl = `/projects/${path.basename(projectPath)}/${outName}`;
 
   function sendDataToClient(data) {
     wss.clients.forEach((client) => {
@@ -169,7 +151,7 @@ const httpsOptions = {
 };
 
 const server = https.createServer(httpsOptions, app).listen(port, () => {
-  console.log("App running at: ", `${serverUrl}index.html`);
+  console.log("App running at: ", `https://localhost:${port}/index.html`);
 });
 
 const wss = new WebSocketServer({ server, clientTracking: true });
