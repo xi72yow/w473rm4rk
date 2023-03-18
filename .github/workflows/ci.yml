@@ -19,9 +19,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
+          registry: ghcr.io
           push: true
           platforms: linux/amd64
           tags: ${{ github.repository }}:latest
       - name: Inspect
         run: |
-          docker buildx imagetools inspect localhost:5000/name/app:latest
+          docker buildx imagetools inspect ghcr.io/${{ github.repository }}:latest
