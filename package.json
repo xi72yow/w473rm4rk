@@ -1,0 +1,26 @@
+{
+  "name": "w473rm4rk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "editly": "xi72yow/editly-fork",
+    "express": "^4.18.2",
+    "express-fileupload": "^1.4.0",
+    "https": "^1.0.0",
+    "moment": "^2.29.4",
+    "rimraf": "^4.1.2",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}

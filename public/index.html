@@ -1,0 +1,179 @@
+<html>
+  <body>
+    <form ref="uploadForm" id="uploadForm">
+      <p>Allgemeine-Einstellungen</p>
+
+      <div>
+        Logo: <input type="file" name="logo" accept="image/*" required />
+      </div>
+      <div>
+        Video: <input type="file" name="video" accept="video/*" required />
+      </div>
+
+      <br />
+
+      <p>
+        Video-Einstellungen (Eingaben relativ zu den Videomaßen/Angegeben wird
+        der Ort des oberen linken Punktes des Logos)
+      </p>
+
+      <div>
+        Abstand Links:
+        <input
+          placeholder="0.05"
+          step="0.01"
+          type="number"
+          name="spacingLeft"
+          required
+        />
+      </div>
+      <div>
+        Abstand Unten:
+        <input
+          placeholder="0.15"
+          step="0.01"
+          type="number"
+          name="spacingBottom"
+          required
+        />
+      </div>
+      <div>
+        Breite Logo:
+        <input
+          placeholder="0.2"
+          step="0.01"
+          type="number"
+          name="logoWidth"
+          required
+        />
+      </div>
+
+      <div>
+        Schnelle Vorschau (geringe Auflösung und weniger Frames):
+        <input type="checkbox" name="fast" />
+      </div>
+      <br />
+
+      <div>
+        Passwort:
+        <input type="text" name="password" required />
+        <input type="submit" id="submitBttn" value="Los!" />
+      </div>
+    </form>
+
+    <br />
+    <div>
+      <p>Letzte Videos:</p>
+      <ul id="urls"></ul>
+    </div>
+
+    <div id="convertInfo" hidden>
+      Hier wird das Video gerade erstellt:
+      <br />
+      <br />
+      <div id="progress">Fortschritt: 0%</div>
+      <div id="time">Zeit bis zur Fertigstellung: 0s</div>
+      <br />
+    </div>
+
+    <script>
+      // @see https://stackoverflow.com/questions/36098913/convert-seconds-to-days-hours-minutes-and-seconds
+      function secondsToDhms(seconds) {
+        seconds = Number(seconds);
+        var d = Math.floor(seconds / (3600 * 24));
+        var h = Math.floor((seconds % (3600 * 24)) / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        var s = Math.floor(seconds % 60);
+
+        var dDisplay = d > 0 ? d + (d == 1 ? " day, " : " days, ") : "";
+        var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+        var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+        var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+        return dDisplay + hDisplay + mDisplay + sDisplay;
+      }
+
+      function saveUrlInLocalStorage(url) {
+        const urls = JSON.parse(localStorage.getItem("urls")) || [];
+        if (url.includes("https://")) urls.push(url);
+        while (urls.length > 10) {
+          urls.shift();
+        }
+        localStorage.setItem("urls", JSON.stringify(urls));
+      }
+
+      function loadUrlsFromLocalStorage() {
+        const urls = JSON.parse(localStorage.getItem("urls")) || [];
+        const urlsDiv = document.getElementById("urls");
+        urlsDiv.innerHTML = "";
+        for (url of urls) {
+          urlsDiv.innerHTML += `<li><a href="${url}">${url}</a><br /></li>`;
+        }
+        urlsDiv.innerHTML += "<br />";
+      }
+
+      const webSocket = new WebSocket(location.origin.replace(/^https/, "wss"));
+      let startTime = 0;
+      webSocket.onmessage = (event) => {
+        const progress = document.getElementById("progress");
+        progress.innerHTML = "Fortschritt: " + event.data + "%";
+        const time = document.getElementById("time");
+        if (event.data === "100") {
+          time.innerHTML =
+            "Fertig! " + secondsToDhms((Date.now() - startTime) / 1000);
+          blockUi(false);
+        } else
+          time.innerHTML =
+            "Zeit bis zur Fertigstellung: " +
+            secondsToDhms(
+              ((Date.now() - startTime) / (1000 * parseInt(event.data))) *
+                (100 - parseInt(event.data))
+            );
+      };
+
+      function formSubmit(event) {
+        startTime = Date.now();
+
+        const url = "/upload";
+        const request = new XMLHttpRequest();
+        request.open("POST", url, true);
+        request.onload = function () {
+          if (request.status >= 200 && request.status < 400) {
+            blockUi(true);
+            saveUrlInLocalStorage(request.responseText);
+            loadUrlsFromLocalStorage();
+            webSocket.send(request.responseText);
+            const info = document.getElementById("convertInfo");
+            info.hidden = false;
+            info.innerHTML += `<a href="${request.responseText}">
+          ${request.responseText}
+          </a>
+        `;
+          } else {
+            alert("Fehler: " + request.responseText);
+          }
+        };
+
+        request.onerror = function (err) {
+          alert("Fehler: " + JSON.stringify(err));
+        };
+
+        request.send(new FormData(event.target)); // create FormData from form that triggered event
+        event.preventDefault();
+      }
+
+      function blockUi(state) {
+        const forms = document.querySelectorAll("input");
+        for (form of forms) {
+          form.readOnly = state;
+        }
+
+        document.getElementById("submitBttn").disabled = state;
+      }
+
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", formSubmit);
+      loadUrlsFromLocalStorage();
+    </script>
+  </body>
+</html>
