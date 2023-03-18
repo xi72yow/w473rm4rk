@@ -77,6 +77,7 @@
     </div>
 
     <script>
+      const uploadIntervall = null;
       // @see https://stackoverflow.com/questions/36098913/convert-seconds-to-days-hours-minutes-and-seconds
       function secondsToDhms(seconds) {
         seconds = Number(seconds);
@@ -131,12 +132,26 @@
       };
 
       function formSubmit(event) {
+        uplodingInterval = setInterval(() => {
+          const uploding = document.getElementById("uploding");
+          uploding.innerHTML = "Uploading";
+          setTimeout(() => {
+            uploding.innerHTML = "Uploading.";
+            setTimeout(() => {
+              uploding.innerHTML = "Uploading..";
+              setTimeout(() => {
+                uploding.innerHTML = "Uploading...";
+              }, 600);
+            }, 600);
+          }, 600);
+        }, 1805);
         startTime = Date.now();
         blockUi(true);
         const url = "/upload";
         const request = new XMLHttpRequest();
         request.open("POST", url, true);
         request.onload = function () {
+          clearInterval(uplodingInterval);
           if (request.status >= 200 && request.status < 400) {
             saveUrlInLocalStorage(request.responseText);
             loadUrlsFromLocalStorage();
