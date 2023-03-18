@@ -20,3 +20,5 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: ${{ github.repository }}:latest
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
