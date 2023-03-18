@@ -9,7 +9,7 @@
     "dev": "nodemon index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "xi72yow",
   "license": "ISC",
   "dependencies": {
     "editly": "xi72yow/editly-fork",
