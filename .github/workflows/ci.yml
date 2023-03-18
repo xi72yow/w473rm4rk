@@ -10,18 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build the Docker image
-        run: docker build . -t ghcr.io/${{ github.repository }}:latest
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push the image to GitHub Container Registry
-        uses: docker/push-action@v1
-        with:
-          registry: ghcr.io
-          repository: ${{ github.repository }}
-          tag_with_ref: true
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ github.repository }}:latest
