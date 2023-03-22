@@ -27,6 +27,7 @@ const port = 3000;
 
 function isAuth(req, res, next) {
   const { password } = req.body;
+  console.log("🚀 ~ file: index.js:30 ~ isAuth ~ password:", password);
   if (password === "xi72yow") {
     next();
   } else {
@@ -88,8 +89,9 @@ app.post("/upload", isAuth, async function (req, res) {
 
   function sendDataToClient(data) {
     wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN && client.id === downloadUrl)
-        client.send(JSON.stringify(data));
+      if (client)
+        if (client.readyState === WebSocket.OPEN && client.id === downloadUrl)
+          client.send(JSON.stringify({ ...data, downloadUrl }));
     });
   }
 
@@ -120,13 +122,13 @@ app.post("/upload", isAuth, async function (req, res) {
       ],
       fast: Boolean(fast),
       onProgress: (process) => {
-        sendDataToClient(process);
+        sendDataToClient({ progress: process });
       },
     });
   } catch (e) {
-    sendDataToClient(e);
+    sendDataToClient({ error: e });
   }
-  sendDataToClient(100);
+  sendDataToClient({ progress: 100 });
   clearOldFolders();
 });
 
@@ -159,6 +161,11 @@ const wss = new WebSocketServer({ server, clientTracking: true });
 wss.on("connection", (ws, req) => {
   console.log("New client connected!");
   ws.on("message", (message) => {
+    console.log(
+      "🚀 ~ file: index.js:169 ~ ws.on ~ message:",
+      message.toString()
+    );
+
     ws.id = message.toString();
   });
   ws.on("close", () => {
