@@ -185,6 +185,15 @@
     <script>
       const uploadIntervall = null;
 
+      const timeFormatter = new Intl.DateTimeFormat("de-DE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+
       function secondsToDhms(seconds) {
         seconds = Number(seconds);
         const d = Math.floor(seconds / (3600 * 24));
@@ -240,18 +249,14 @@
         progressBarOverFiftyPercent.id = newId + "-over-fity-percent";
       }
 
-      function updateProgressBar(
-        downloadUrl,
-        progress,
-        indikatorText,
-        time,
-        details = ""
-      ) {
+      function updateProgressBar(downloadUrl, progress, indikatorText, time) {
         const indikator = document.getElementById(downloadUrl + "-indikator");
         indikator.innerText = indikatorText;
 
+        const { name } = getUrlParam(downloadUrl);
+
         const info = document.getElementById(downloadUrl + "-info");
-        info.innerText = details;
+        info.innerHTML = `Das Video (${name}) wird bearbeitet. Bitte warten...`;
 
         const progressBar = document.getElementById(downloadUrl);
         progressBar.setAttribute("aria-valuenow", progress);
@@ -264,11 +269,7 @@
           progressBar.classList.add("bg-success");
           progressBar.innerText =
             "Fertig! " + secondsToDhms((Date.now() - time) / 1000);
-          info.innerText =
-            "Video (" +
-            details +
-            ") Fertig!" +
-            secondsToDhms((Date.now() - time) / 1000);
+          info.innerHTML = `Fertig! <a href="${downloadUrl}" class="link-success" target="_blank" >Download ${name}</a>`;
         } else {
           progressBar.classList.remove("bg-success");
           if (progress < 50) {
@@ -287,27 +288,44 @@
         }
       }
 
+      const loacalStorageId = "urls-v1";
+
       function saveUrlInLocalStorage(url) {
-        const urls = JSON.parse(localStorage.getItem("urls-v1")) || [];
+        const urls = JSON.parse(localStorage.getItem(loacalStorageId)) || [];
         if (url.includes("projects")) urls.push(url);
         while (urls.length > 10) {
           urls.shift();
         }
-        localStorage.setItem("urls", JSON.stringify(urls));
+        localStorage.setItem(loacalStorageId, JSON.stringify(urls));
       }
 
       const webSocket = new WebSocket(location.origin.replace(/^https/, "wss"));
 
+      function getUrlParam(url) {
+        if (typeof url == "number") return { time: 0, name: "Unbekannt" };
+        const splittedUrl = url.split("/");
+        const time = splittedUrl[2];
+        const name = splittedUrl[splittedUrl.length - 1];
+        return { time, name };
+      }
+
       function loadUrlsFromLocalStorage() {
-        const urls = JSON.parse(localStorage.getItem("urls")) || [];
+        const urls = JSON.parse(localStorage.getItem(loacalStorageId)) || [];
         const urlsDiv = document.getElementById("urls");
         urlsDiv.innerHTML = "";
-        for (url of urls) {
-          urlsDiv.innerHTML += `<a href="${url}" class="list-group-item list-group-item-action" target="_blank">${url}</a>`;
-          //send lasr url to server
-          webSocket.onopen = (event) => {
-            webSocket.send(url);
-          };
+        for (let i = 0; i < urls.length; i++) {
+          const url = urls[i];
+          const splittedUrl = url.split("/");
+          const { time, name } = getUrlParam(url);
+          urlsDiv.innerHTML += `<a href="${url}" class="list-group-item list-group-item-action" target="_blank">${name} ${timeFormatter.format(
+            time
+          )}</a>`;
+
+          if (i == urls.length - 1) {
+            webSocket.onopen = (event) => {
+              webSocket.send(url);
+            };
+          }
         }
       }
 
@@ -336,13 +354,13 @@
           data.downloadUrl,
           data.progress,
           renderText,
-          startTime,
-          "Das Video (" + data.downloadUrl + ") wird bearbeitet."
+          startTime
         );
       };
+      
+      let startTimeUpload = Date.now();
 
       function formSubmit(event) {
-        let startTimeUpload = Date.now();
         const tempId = startTimeUpload.toString();
         createProgressBar(tempId, uploadText);
 
@@ -366,20 +384,14 @@
 
         request.upload.onprogress = function (e) {
           const p = Math.round((100 / e.total) * e.loaded);
-          updateProgressBar(
-            startTimeUpload,
-            p,
-            uploadText,
-            startTimeUpload,
-            "Hochladen des Videos."
-          );
+          updateProgressBar(startTimeUpload, p, uploadText, startTimeUpload);
         };
 
         request.onerror = function (err) {
           alert("Fehler: " + JSON.stringify(err));
         };
 
-        request.send(new FormData(event.target)); // create FormData from form that triggered event
+        request.send(new FormData(event.target));
         event.preventDefault();
       }
 
