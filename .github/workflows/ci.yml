@@ -24,6 +24,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: "ghcr.io/${{ github.repository }}:latest"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Inspect
         run: |
           docker buildx imagetools inspect "ghcr.io/${{ github.repository }}:latest"
